@@ -1,4 +1,23 @@
+<?php
+session_start();
 
+if (!isset($_SESSION['email']) || !isset($_SESSION['code'])) {
+    header("Location: register.php");
+    exit();
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $userCode = trim($_POST['code']);
+
+    if ($userCode == $_SESSION['code']) {
+        $success = "Verifizierung erfolgreich! Dein Konto ist aktiviert.";
+        // Session löschen, um Missbrauch zu verhindern
+        session_destroy();
+    } else {
+        $error = "Der eingegebene Code ist falsch.";
+    }
+}
+?>
 
 <!DOCTYPE html>
 <html lang="de">
