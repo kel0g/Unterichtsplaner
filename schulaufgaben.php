@@ -22,31 +22,6 @@ if (file_exists($aufgabenFile)) {
         }
     }
 }
-
-// Bestehende Stunden laden
-$stunden = [];
-if (file_exists($stundenFile)) {
-    $lines = file($stundenFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        list($tag, $zeit, $fach) = array_map('trim', explode("|", $line));
-        $stunden[] = ["tag" => $tag, "zeit" => $zeit, "fach" => $fach];
-    }
-}
-
-// Bestehende Schulaufgaben laden (für gelbe Markierung)
-$aufgaben = [];
-if (file_exists($aufgabenFile)) {
-    $lines = file($aufgabenFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        // Format: Tag | Fach | Beschreibung ...
-        $teile = explode("|", $line);
-        if (count($teile) >= 2) {
-            $aufgaben[] = ["tag" => trim($teile[0]), "fach" => trim($teile[1])];
-        }
-    }
-}
-
-$tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
 ?>
 
 <!DOCTYPE html>
