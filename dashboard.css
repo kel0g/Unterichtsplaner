@@ -42,4 +42,41 @@ p {
     min-width: 200px;
 }
 
+.main-btn:hover {
+    background-color: #2e59d9;
+}
+
+/* Navigationsleiste unten */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid #ddd;
+    padding: 10px 0;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-btn {
+    text-decoration: none;
+    color: #555;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 8px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.nav-btn:hover {
+    background-color: #f1f1f1;
+    color: #000;
+}
+
+.nav-btn.active {
+    background-color: #4e73df;
+    color: #fff;
+}
 
