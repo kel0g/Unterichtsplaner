@@ -47,6 +47,22 @@
             </div>
         </div>
 
-        
+        <div class="bottom-nav">
+            <a href="dashboard.php" class="nav-btn">Start</a>
+            <a href="stundenplan.php" class="nav-btn">Stundenplan</a>
+            <a href="mitteilungen.php" class="nav-btn">Mitteilungen</a>
+        </div>
+    </div>
+
+    <script>
+        const popup = document.getElementById("popupForm");
+        const btn = document.getElementById("neueBtn");
+        const span = document.getElementsByClassName("close")[0];
+
+        btn.onclick = () => { popup.style.display = "block"; }
+        span.onclick = () => { popup.style.display = "none"; }
+        window.onclick = (event) => { if (event.target == popup) popup.style.display = "none"; }
+    </script>
+
 </body>
 </html>
