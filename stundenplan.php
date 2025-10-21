@@ -151,6 +151,7 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
             <a href="dashboard.php" class="nav-btn">Start</a>
             <a href="stundenplan.php" class="nav-btn active">Stundenplan</a>
             <a href="mitteilungen.php" class="nav-btn">Mitteilungen</a>
+            <a href="logout.php" class="nav-btn">Einstellungen</a>
         </div>
     </div>
 
