@@ -20,6 +20,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['fach'])) {
     }
 }
 
+// Stunden eintragen
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['fach'])) {
+    $fach = htmlspecialchars(trim($_POST['fach']));
+    $tag = htmlspecialchars(trim($_POST['tag']));
+    $text = htmlspecialchars(trim($_POST['text']));
+
+    if (!empty($fach) && !empty($tag) && !empty($zeit)) {
+        $data = "$tag |  $fach | $text" . PHP_EOL;
+        file_put_contents($aufgabenFile, $data, FILE_APPEND | LOCK_EX);
+    }
+}
+
 // Bestehende Stunden laden
 $stunden = [];
 if (file_exists($stundenFile)) {
@@ -52,12 +64,14 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stundenplan</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="stundenplan.css">
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/stundenplan.css">
 </head>
 <body>
     <div class="stundenplan-container">
         <h1>Stundenplan</h1>
+
+        <button class="btn" id="neueBtn">+</button>
 
         <form method="POST" action="" class="stunden-form">
             <select name="tag" required>
@@ -67,10 +81,39 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
                 <?php endforeach; ?>
             </select>
 
-            <input type="time" name="zeit" required>
-            <input type="text" name="fach" placeholder="Fach" required>
-            <button type="submit" class="btn">Eintragen</button>
+        <from class="dropdown" id="options">
+            <input list="moglichkeiten" type="text" name="optionen"/>
+            <datalist id="option">
+                <option value="Stunden" id="wahl2"/>
+                <option value="Schulaufgabe" id="wahl1"/>
+            </datalist>
         </form>
+
+
+        <div id="popupForm1" class="popup">
+            <div class="popup-content">
+                <span class="close">&times;</span>
+                <form method="POST" action="">
+                <h1>Schulaufgaben</h1>
+                <input type="time" name="zeit" required>
+                <input type="text" name="fach" placeholder="Fach" required>
+                <button type="submit" class="btn">Eintragen</button>
+                </form>
+            </div>
+        </div>
+
+         <div id="popupForm2" class="popup">
+            <div class="popup-content">
+                <span class="close">&times;</span>
+                <form method="POST" action="">
+                <h1>Stunden</h1>
+                <input type="time" name="zeit" required>
+                <input type="text" name="fach" placeholder="Fach" required>
+                <input type="text" name="text" placeholder="Sachinhalt" required>
+                <button type="submit" class="btn">Eintragen</button>
+                </form>
+            </div>
+        </div>
 
         <div class="kalender">
             <?php foreach ($tage as $tag): ?>
@@ -108,7 +151,24 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
             <a href="dashboard.php" class="nav-btn">Start</a>
             <a href="stundenplan.php" class="nav-btn active">Stundenplan</a>
             <a href="mitteilungen.php" class="nav-btn">Mitteilungen</a>
+            <a href="einstellungen.php" class="nav-btn">Einstellungen</a>
         </div>
     </div>
+
+     <script>
+        const auswahl = document.getElementById("options");
+        const wahl1 = document.getElementById("wahl1");
+        const wahl2 = document.getElementById("wahl2");
+        const popup1 = document.getElementById("popupForm1");
+        const popup2 = document.getElementById("popupForm1");
+        const btn = document.getElementById("neueBtn");
+        const span = document.getElementsByClassName("close")[0];
+
+        btn.onclick = () => { auswahl.style.display = "block"; }
+        wahl1.onclick = () => { popup1.style.display = "block"; }
+        wahl2.onclick = () => { popup2.style.display = "block"; }
+        span.onclick = () => { popup.style.display = "none"; }
+        window.onclick = (event) => { if (event.target == popup) popup.style.display = "none"; }
+    </script>
 </body>
 </html>

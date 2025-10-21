@@ -18,12 +18,11 @@ $username = $_SESSION['username'];
 </head>
 <body>
     <div class="dashboard-container">
-        <h1>Willkommen, <?php echo htmlspecialchars($username); ?>!</h1>
+        <h1>Einstellungen</h1>
         <p>Wähle eine Option:</p>
 
         <div class="main-buttons">
-            <a href="schulaufgaben.php" class="main-btn">Schulaufgaben</a>
-            <a href="abwesenheit.php" class="main-btn">Abwesenheit eintragen</a>
+            <a href="logout.php" class="main-btn">Logout</a>
         </div>
 
         <div class="bottom-nav">

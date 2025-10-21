@@ -30,8 +30,8 @@ if (file_exists($aufgabenFile)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schulaufgaben</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="schulaufgaben.css">
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/schulaufgaben.css">
 </head>
 <body>
     <div class="schulaufgaben-container">
@@ -55,6 +55,7 @@ if (file_exists($aufgabenFile)) {
             <a href="dashboard.php" class="nav-btn">Start</a>
             <a href="stundenplan.php" class="nav-btn">Stundenplan</a>
             <a href="mitteilungen.php" class="nav-btn">Mitteilungen</a>
+            <a href="einstellungen.php" class="nav-btn">Einstellungen</a>
         </div>
     </div>
 </body>
