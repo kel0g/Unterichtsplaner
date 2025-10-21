@@ -51,7 +51,7 @@
             <a href="dashboard.php" class="nav-btn">Start</a>
             <a href="stundenplan.php" class="nav-btn">Stundenplan</a>
             <a href="mitteilungen.php" class="nav-btn">Mitteilungen</a>
-            <a href="logout.php" class="nav-btn">Einstellungen</a>
+            <a href="einstellungen.php" class="nav-btn">Einstellungen</a>
         </div>
     </div>
 
