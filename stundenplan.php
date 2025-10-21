@@ -84,8 +84,8 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
         <from class="dropdown" id="options">
             <input list="moglichkeiten" type="text" name="optionen"/>
             <datalist id="option">
-                <option value="Stunden" id="wahl1"/>
-                <option value="Schulaufgabe" id="wahl2"/>
+                <option value="Stunden" id="wahl2"/>
+                <option value="Schulaufgabe" id="wahl1"/>
             </datalist>
         </form>
 
@@ -94,6 +94,7 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
             <div class="popup-content">
                 <span class="close">&times;</span>
                 <form method="POST" action="">
+                <h1>Schulaufgaben</h1>
                 <input type="time" name="zeit" required>
                 <input type="text" name="fach" placeholder="Fach" required>
                 <button type="submit" class="btn">Eintragen</button>
@@ -105,6 +106,7 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
             <div class="popup-content">
                 <span class="close">&times;</span>
                 <form method="POST" action="">
+                <h1>Stunden</h1>
                 <input type="time" name="zeit" required>
                 <input type="text" name="fach" placeholder="Fach" required>
                 <input type="text" name="text" placeholder="Sachinhalt" required>
