@@ -5,36 +5,60 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
-$mitteilungenFile = "textdateien/mitteilungen.txt";
+// SQLite-Datenbank in textdateien/mitteilungen.db
+$dbFile = __DIR__ . DIRECTORY_SEPARATOR . 'textdateien' . DIRECTORY_SEPARATOR . 'mitteilungen.db';
+$dsn = 'sqlite:' . $dbFile;
 $mitteilungen = [];
 
-// Neue Mitteilung speichern
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['titel'])) {
-    $username = $_SESSION['username'];
-    $titel = htmlspecialchars(trim($_POST['titel']));
-    $nachricht = htmlspecialchars(trim($_POST['nachricht']));
-    $datum = date("d.m.Y H:i");
+try {
+    $pdo = new PDO($dsn);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    if (!empty($titel) && !empty($nachricht)) {
-        $eintrag = "$datum | $username | $titel | $nachricht" . PHP_EOL;
-        file_put_contents($mitteilungenFile, $eintrag, FILE_APPEND | LOCK_EX);
-    }
-}
+    // Tabelle erstellen, falls nicht vorhanden
+    $createSql = "CREATE TABLE IF NOT EXISTS mitteilungen (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        username TEXT NOT NULL,
+        titel TEXT NOT NULL,
+        nachricht TEXT NOT NULL
+    )";
+    $pdo->exec($createSql);
 
-// Bestehende Mitteilungen laden
-if (file_exists($mitteilungenFile)) {
-    $lines = file($mitteilungenFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        $teile = explode("|", $line);
-        if (count($teile) >= 4) {
-            $mitteilungen[] = [
-                "datum" => trim($teile[0]),
-                "autor" => trim($teile[1]),
-                "titel" => trim($teile[2]),
-                "nachricht" => trim($teile[3])
-            ];
+    // Neue Mitteilung speichern
+    if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['titel'])) {
+        $username = $_SESSION['username'];
+        $titel = trim($_POST['titel']);
+        $nachricht = trim($_POST['nachricht']);
+
+        if ($titel !== '' && $nachricht !== '') {
+            $stmt = $pdo->prepare('INSERT INTO mitteilungen (username, titel, nachricht) VALUES (:username, :titel, :nachricht)');
+            $stmt->execute([
+                ':username' => $username,
+                ':titel' => $titel,
+                ':nachricht' => $nachricht
+            ]);
+
+            // Redirect um Doppel-Submit zu verhindern
+            header('Location: ' . $_SERVER['PHP_SELF']);
+            exit();
         }
     }
+
+    // Bestehende Mitteilungen laden (neueste zuerst)
+    $stmt = $pdo->query('SELECT id, created_at, username, titel, nachricht FROM mitteilungen ORDER BY created_at DESC');
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($rows as $row) {
+        $mitteilungen[] = [
+            'datum' => date('d.m.Y H:i', strtotime($row['created_at'])),
+            'autor' => $row['username'],
+            'titel' => $row['titel'],
+            'nachricht' => $row['nachricht']
+        ];
+    }
+
+} catch (Exception $e) {
+    // Bei Fehlern: Fallback leer lassen und evtl. Fehler in Log schreiben
+    error_log('Mitteilungen DB-Fehler: ' . $e->getMessage());
 }
 ?>
 
@@ -57,7 +81,7 @@ if (file_exists($mitteilungenFile)) {
             <?php if (empty($mitteilungen)): ?>
                 <p class="leer">Keine Mitteilungen vorhanden.</p>
             <?php else: ?>
-                <?php foreach (array_reverse($mitteilungen) as $m): ?>
+                <?php foreach ($mitteilungen as $m): ?>
                     <div class="mitteilung">
                         <strong><?php echo htmlspecialchars($m['titel']); ?></strong> 
                         (<?php echo htmlspecialchars($m['datum']); ?>) von <em><?php echo htmlspecialchars($m['autor']); ?></em><br>
