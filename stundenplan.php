@@ -8,28 +8,36 @@ if (!isset($_SESSION['username'])) {
 $stundenFile = "textdateien/stunden.txt";
 $aufgabenFile = "textdateien/schulaufgaben.txt";
 
-// Stunden eintragen
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['fach'])) {
-    $fach = htmlspecialchars(trim($_POST['fach']));
-    $tag = htmlspecialchars(trim($_POST['tag']));
-    $zeit = htmlspecialchars(trim($_POST['zeit']));
+// POST-Handling: Formulare unterscheiden per form_type
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $form_type = $_POST['form_type'] ?? '';
 
-    if (!empty($fach) && !empty($tag) && !empty($zeit)) {
-        $data = "$tag | $zeit | $fach" . PHP_EOL;
-        file_put_contents($stundenFile, $data, FILE_APPEND | LOCK_EX);
+    if ($form_type === 'stunde') {
+        $fach = htmlspecialchars(trim($_POST['fach'] ?? ''));
+        $tag = htmlspecialchars(trim($_POST['tag'] ?? ''));
+        $zeit = htmlspecialchars(trim($_POST['zeit'] ?? ''));
+
+        if ($fach !== '' && $tag !== '' && $zeit !== '') {
+            $data = "$tag | $zeit | $fach" . PHP_EOL;
+            file_put_contents($stundenFile, $data, FILE_APPEND | LOCK_EX);
+        }
+
+    } elseif ($form_type === 'aufgabe') {
+        // Schulaufgabe anlegen (die Stunde bleibt erhalten)
+        $fach = htmlspecialchars(trim($_POST['fach'] ?? ''));
+        $tag = htmlspecialchars(trim($_POST['tag'] ?? ''));
+        $text = htmlspecialchars(trim($_POST['text'] ?? ''));
+        $zeit = htmlspecialchars(trim($_POST['zeit'] ?? ''));
+
+        if ($fach !== '' && $tag !== '' && $text !== '') {
+            $data = "$tag | $fach | $text" . PHP_EOL;
+            file_put_contents($aufgabenFile, $data, FILE_APPEND | LOCK_EX);
+        }
     }
-}
 
-// Stunden eintragen
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['fach'])) {
-    $fach = htmlspecialchars(trim($_POST['fach']));
-    $tag = htmlspecialchars(trim($_POST['tag']));
-    $text = htmlspecialchars(trim($_POST['text']));
-
-    if (!empty($fach) && !empty($tag) && !empty($zeit)) {
-        $data = "$tag |  $fach | $text" . PHP_EOL;
-        file_put_contents($aufgabenFile, $data, FILE_APPEND | LOCK_EX);
-    }
+    // Redirect, um Doppel-Submits bei Reload zu vermeiden
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit();
 }
 
 // Bestehende Stunden laden
@@ -74,27 +82,33 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
         <button class="btn" id="neueBtn">+</button>
 
         <form method="POST" action="" class="stunden-form">
-            <select name="tag" required>
+            <select id="tagSelect" name="tag" required>
                 <option value="">Tag wählen</option>
                 <?php foreach ($tage as $t): ?>
                     <option value="<?php echo $t; ?>"><?php echo $t; ?></option>
                 <?php endforeach; ?>
             </select>
-
-        <from class="dropdown" id="options">
-            <input list="moglichkeiten" type="text" name="optionen"/>
-            <datalist id="option">
-                <option value="Stunden" id="wahl2"/>
-                <option value="Schulaufgabe" id="wahl1"/>
-            </datalist>
         </form>
 
+        <!-- Auswahl-Popup statt Dropdown -->
+        <div id="selectPopup" class="popup">
+            <div class="popup-content">
+                <span class="close select-close">&times;</span>
+                <h2>Was möchtest du eintragen?</h2>
+                <div class="select-buttons">
+                    <button type="button" id="openAufgabe" class="btn">Stunde</button>
+                    <button type="button" id="openStunde" class="btn">Schulaufgabe</button>
+                </div>
+            </div>
+        </div>
 
         <div id="popupForm1" class="popup">
             <div class="popup-content">
                 <span class="close">&times;</span>
                 <form method="POST" action="">
-                <h1>Schulaufgaben</h1>
+                <h1>Stunden</h1>
+                <input type="hidden" name="form_type" value="stunde">
+                <input type="hidden" name="tag" class="popup-tag">
                 <input type="time" name="zeit" required>
                 <input type="text" name="fach" placeholder="Fach" required>
                 <button type="submit" class="btn">Eintragen</button>
@@ -106,9 +120,12 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
             <div class="popup-content">
                 <span class="close">&times;</span>
                 <form method="POST" action="">
-                <h1>Stunden</h1>
-                <input type="time" name="zeit" required>
-                <input type="text" name="fach" placeholder="Fach" required>
+                <h1>Schulaufgaben</h1>
+                <input type="hidden" name="form_type" value="aufgabe">
+                <input type="hidden" name="tag" class="popup-tag">
+                <input type="hidden" name="fach" class="popup-fach">
+                <input type="hidden" name="zeit" class="popup-zeit">
+                <input type="text" name="fach_visible" placeholder="Fach" required>
                 <input type="text" name="text" placeholder="Sachinhalt" required>
                 <button type="submit" class="btn">Eintragen</button>
                 </form>
@@ -132,7 +149,7 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
                                         break;
                                     }
                                 }
-                                echo '<div class="stunde ' . ($isAufgabe ? 'aufgabe' : '') . '">';
+                                echo '<div class="stunde ' . ($isAufgabe ? 'aufgabe' : '') . '" data-tag="' . htmlspecialchars($s['tag']) . '" data-fach="' . htmlspecialchars($s['fach']) . '" data-zeit="' . htmlspecialchars($s['zeit']) . '">';
                                 echo '<strong>' . htmlspecialchars($s['fach']) . '</strong><br>';
                                 echo '<span>' . htmlspecialchars($s['zeit']) . '</span>';
                                 echo '</div>';
@@ -156,23 +173,56 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
     </div>
 
      <script>
-        const auswahl = document.getElementById("options");
-        const wahl1 = document.getElementById("wahl1");
-        const wahl2 = document.getElementById("wahl2");
-        const popup1 = document.getElementById("popupForm1");
-        const popup2 = document.getElementById("popupForm2");
-        const btn = document.getElementById("neueBtn");
-        const closes = document.querySelectorAll(".popup .close");
+        const selectPopup = document.getElementById('selectPopup');
+        const tagSelect = document.getElementById('tagSelect');
+        const openAufgabe = document.getElementById('openAufgabe');
+        const openStunde = document.getElementById('openStunde');
+        const popup1 = document.getElementById('popupForm1');
+        const popup2 = document.getElementById('popupForm2');
+        const btn = document.getElementById('neueBtn');
+        const closes = document.querySelectorAll('.popup .close');
 
-        btn.onclick = () => { auswahl.style.display = "block"; }
-        wahl1.onclick = () => { popup1.style.display = "block"; }
-        wahl2.onclick = () => { popup2.style.display = "block"; }
-        closes.forEach(c => c.addEventListener("click", e => {
-            e.target.closest(".popup").style.display = "none";
+        btn.onclick = () => { selectPopup.style.display = 'flex'; }
+
+        openAufgabe.onclick = () => {
+            const tag = tagSelect.value || '';
+            document.querySelectorAll('.popup-tag').forEach(el => el.value = tag);
+            selectPopup.style.display = 'none';
+            popup1.style.display = 'flex';
+        }
+
+        openStunde.onclick = () => {
+            const tag = tagSelect.value || '';
+            document.querySelectorAll('.popup-tag').forEach(el => el.value = tag);
+            selectPopup.style.display = 'none';
+            popup2.style.display = 'flex';
+        }
+
+        // Neuer Teil: Klick auf bestehende Stunde öffnet Schulaufgaben-Popup
+        document.querySelectorAll('.stunde').forEach(el => {
+            el.addEventListener('click', () => {
+                const tag = el.getAttribute('data-tag') || '';
+                const fach = el.getAttribute('data-fach') || '';
+                const zeit = el.getAttribute('data-zeit') || '';
+                // Fülle versteckte Felder im Schulaufgaben-Formular
+                const aufgabeTag = document.querySelector('#popupForm2 input[name="tag"]');
+                const aufgabeFach = document.querySelector('#popupForm2 input[name="fach"]');
+                const aufgabeZeit = document.querySelector('#popupForm2 input[name="zeit"]');
+                const fachVisible = document.querySelector('#popupForm2 input[name="fach_visible"]');
+                if (aufgabeTag) aufgabeTag.value = tag;
+                if (aufgabeFach) aufgabeFach.value = fach;
+                if (aufgabeZeit) aufgabeZeit.value = zeit;
+                if (fachVisible) { fachVisible.value = fach; fachVisible.readOnly = true; }
+                popup2.style.display = 'flex';
+            });
+        });
+
+        closes.forEach(c => c.addEventListener('click', e => {
+            e.target.closest('.popup').style.display = 'none';
         }));
 
-        window.addEventListener("click", e => {
-            if (e.target.classList.contains("popup")) e.target.style.display = "none";
+        window.addEventListener('click', e => {
+            if (e.target.classList.contains('popup')) e.target.style.display = 'none';
         });
     </script>
 </body>
