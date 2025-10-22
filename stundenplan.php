@@ -160,15 +160,20 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
         const wahl1 = document.getElementById("wahl1");
         const wahl2 = document.getElementById("wahl2");
         const popup1 = document.getElementById("popupForm1");
-        const popup2 = document.getElementById("popupForm1");
+        const popup2 = document.getElementById("popupForm2");
         const btn = document.getElementById("neueBtn");
-        const span = document.getElementsByClassName("close")[0];
+        const closes = document.querySelectorAll(".popup .close");
 
         btn.onclick = () => { auswahl.style.display = "block"; }
         wahl1.onclick = () => { popup1.style.display = "block"; }
         wahl2.onclick = () => { popup2.style.display = "block"; }
-        span.onclick = () => { popup.style.display = "none"; }
-        window.onclick = (event) => { if (event.target == popup) popup.style.display = "none"; }
+        closes.forEach(c => c.addEventListener("click", e => {
+            e.target.closest(".popup").style.display = "none";
+        }));
+
+        window.addEventListener("click", e => {
+            if (e.target.classList.contains("popup")) e.target.style.display = "none";
+        });
     </script>
 </body>
 </html>
