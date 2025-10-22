@@ -8,11 +8,15 @@ if (!isset($_SESSION['email']) || !isset($_SESSION['code'])) {
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $userCode = trim($_POST['code']);
-
+ 
     if ($userCode == $_SESSION['code']) {
-        $success = "Verifizierung erfolgreich! Dein Konto ist aktiviert.";
-        // Session löschen, um Missbrauch zu verhindern
-        session_destroy();
+        // Mark verification as successful and redirect to dashboard
+        // Keep the session (so user remains logged in) and optionally set a flag
+        $_SESSION['verified'] = true;
+        // Optionally unset the one-time code
+        unset($_SESSION['code']);
+        header("Location: dashboard.php");
+        exit();
     } else {
         $error = "Der eingegebene Code ist falsch.";
     }

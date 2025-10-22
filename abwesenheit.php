@@ -5,46 +5,67 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
-$abwesenheitFile = "textdateien/abwesenheit.txt";
-
-function saveAbwesenheit($file, $name, $datum, $start, $end, $grund) {
-    $name = htmlspecialchars(trim($name));
-    $datum = htmlspecialchars(trim($datum));
-    $start = htmlspecialchars(trim($start));
-    $end = htmlspecialchars(trim($end));
-    $grund = htmlspecialchars(trim($grund));
-
-    $line = $name . " | " . $datum . " | " . $start . " | " . $end . " | " . $grund . PHP_EOL;
-    file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $start = $_POST['startzeit'] ?? '';
-    $end = $_POST['endzeit'] ?? '';
-    $grund = $_POST['grund'] ?? '';
-    $name = $_SESSION['username'] ?? 'Unbekannt';
-    $datum = date('Y-m-d');
-
-    if ($start !== '' && $end !== '' && $grund !== '') {
-        saveAbwesenheit($abwesenheitFile, $name, $datum, $start, $end, $grund);
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit();
-    }
-}
-
+// SQLite-Datenbank in textdateien/abwesenheit.db
+$dbFile = __DIR__ . DIRECTORY_SEPARATOR . 'textdateien' . DIRECTORY_SEPARATOR . 'abwesenheit.db';
+$dsn = 'sqlite:' . $dbFile;
 $abwesenheiten = [];
-if (file_exists($abwesenheitFile)) {
-    $lines = file($abwesenheitFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        $parts = array_map('trim', explode("|", $line));
+
+try {
+    $pdo = new PDO($dsn);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // Tabelle erstellen, falls nicht vorhanden
+    $createSql = "CREATE TABLE IF NOT EXISTS abwesenheiten (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        username TEXT NOT NULL,
+        datum TEXT NOT NULL,
+        startzeit TEXT NOT NULL,
+        endzeit TEXT NOT NULL,
+        grund TEXT NOT NULL
+    )";
+    $pdo->exec($createSql);
+
+    // Neue Abwesenheit speichern
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $start = trim($_POST['startzeit'] ?? '');
+        $end = trim($_POST['endzeit'] ?? '');
+        $grund = trim($_POST['grund'] ?? '');
+        $name = $_SESSION['username'] ?? 'Unbekannt';
+        $datum = date('Y-m-d');
+
+        if ($start !== '' && $end !== '' && $grund !== '') {
+            $stmt = $pdo->prepare('INSERT INTO abwesenheiten (username, datum, startzeit, endzeit, grund) VALUES (:username, :datum, :start, :end, :grund)');
+            $stmt->execute([
+                ':username' => $name,
+                ':datum' => $datum,
+                ':start' => $start,
+                ':end' => $end,
+                ':grund' => $grund
+            ]);
+
+            // Redirect um Doppel-Submit zu verhindern
+            header("Location: " . $_SERVER['PHP_SELF']);
+            exit();
+        }
+    }
+
+    // Bestehende Abwesenheiten laden (neueste zuerst)
+    $stmt = $pdo->query('SELECT id, created_at, username, datum, startzeit, endzeit, grund FROM abwesenheiten ORDER BY created_at DESC');
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($rows as $row) {
         $abwesenheiten[] = [
-            'name' => $parts[0] ?? '',
-            'datum' => $parts[1] ?? '',
-            'start' => $parts[2] ?? '',
-            'end' => $parts[3] ?? '',
-            'grund' => $parts[4] ?? ''
+            'name' => $row['username'],
+            'datum' => $row['datum'],
+            'start' => $row['startzeit'],
+            'end' => $row['endzeit'],
+            'grund' => $row['grund']
         ];
     }
+
+} catch (Exception $e) {
+    // Bei Fehlern: Fallback leer lassen und Fehler ins Log schreiben
+    error_log('Abwesenheiten DB-Fehler: ' . $e->getMessage());
 }
 ?>
 <!DOCTYPE html>
