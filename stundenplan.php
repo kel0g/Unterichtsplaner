@@ -5,8 +5,8 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
-$stundenFile = "stunden.txt";
-$aufgabenFile = "schulaufgaben.txt";
+$stundenFile = "textdateien/stunden.txt";
+$aufgabenFile = "textdateien/schulaufgaben.txt";
 
 // Stunden eintragen
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['fach'])) {

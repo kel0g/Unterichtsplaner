@@ -12,7 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         // Speicherung in der Textdatei
         $data = "Name: $name | Email: $email | Passwort: $password | Code: $code" . PHP_EOL;
-        file_put_contents("users.txt", $data, FILE_APPEND | LOCK_EX);
+        file_put_contents("textdateien/users.txt", $data, FILE_APPEND | LOCK_EX);
 
         // Code per E-Mail senden
         $subject = "Dein Bestätigungscode";

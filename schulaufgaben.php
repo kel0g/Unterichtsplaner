@@ -5,7 +5,7 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
-$aufgabenFile = "schulaufgaben.txt";
+$aufgabenFile = "textdateien/schulaufgaben.txt";
 $aufgaben = [];
 
 if (file_exists($aufgabenFile)) {

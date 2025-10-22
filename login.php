@@ -6,7 +6,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $password = htmlspecialchars(trim($_POST['password']));
 
     if (!empty($name) && !empty($password)) {
-        $file = "users.txt";
+        $file = "textdateien/users.txt";
 
         if (file_exists($file)) {
             $users = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);

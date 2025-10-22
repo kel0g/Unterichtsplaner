@@ -1,5 +1,52 @@
+<?php
+session_start();
+if (!isset($_SESSION['username'])) {
+    header("Location: login.php");
+    exit();
+}
 
+$abwesenheitFile = "textdateien/abwesenheit.txt";
 
+function saveAbwesenheit($file, $name, $datum, $start, $end, $grund) {
+    $name = htmlspecialchars(trim($name));
+    $datum = htmlspecialchars(trim($datum));
+    $start = htmlspecialchars(trim($start));
+    $end = htmlspecialchars(trim($end));
+    $grund = htmlspecialchars(trim($grund));
+
+    $line = $name . " | " . $datum . " | " . $start . " | " . $end . " | " . $grund . PHP_EOL;
+    file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $start = $_POST['startzeit'] ?? '';
+    $end = $_POST['endzeit'] ?? '';
+    $grund = $_POST['grund'] ?? '';
+    $name = $_SESSION['username'] ?? 'Unbekannt';
+    $datum = date('Y-m-d');
+
+    if ($start !== '' && $end !== '' && $grund !== '') {
+        saveAbwesenheit($abwesenheitFile, $name, $datum, $start, $end, $grund);
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
+    }
+}
+
+$abwesenheiten = [];
+if (file_exists($abwesenheitFile)) {
+    $lines = file($abwesenheitFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        $parts = array_map('trim', explode("|", $line));
+        $abwesenheiten[] = [
+            'name' => $parts[0] ?? '',
+            'datum' => $parts[1] ?? '',
+            'start' => $parts[2] ?? '',
+            'end' => $parts[3] ?? '',
+            'grund' => $parts[4] ?? ''
+        ];
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="de">
 <head>

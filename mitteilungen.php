@@ -5,7 +5,7 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
-$mitteilungenFile = "mitteilungen.txt";
+$mitteilungenFile = "textdateien/mitteilungen.txt";
 $mitteilungen = [];
 
 // Neue Mitteilung speichern
