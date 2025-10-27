@@ -97,7 +97,6 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
                 <h2>Was möchtest du eintragen?</h2>
                 <div class="select-buttons">
                     <button type="button" id="openAufgabe" class="btn">Stunde</button>
-                    <button type="button" id="openStunde" class="btn">Schulaufgabe</button>
                 </div>
             </div>
         </div>
@@ -176,7 +175,6 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
         const selectPopup = document.getElementById('selectPopup');
         const tagSelect = document.getElementById('tagSelect');
         const openAufgabe = document.getElementById('openAufgabe');
-        const openStunde = document.getElementById('openStunde');
         const popup1 = document.getElementById('popupForm1');
         const popup2 = document.getElementById('popupForm2');
         const btn = document.getElementById('neueBtn');
@@ -189,13 +187,6 @@ $tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
             document.querySelectorAll('.popup-tag').forEach(el => el.value = tag);
             selectPopup.style.display = 'none';
             popup1.style.display = 'flex';
-        }
-
-        openStunde.onclick = () => {
-            const tag = tagSelect.value || '';
-            document.querySelectorAll('.popup-tag').forEach(el => el.value = tag);
-            selectPopup.style.display = 'none';
-            popup2.style.display = 'flex';
         }
 
         // Neuer Teil: Klick auf bestehende Stunde öffnet Schulaufgaben-Popup
