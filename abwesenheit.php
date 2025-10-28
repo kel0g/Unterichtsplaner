@@ -5,24 +5,27 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
-// SQLite-Datenbank in textdateien/abwesenheit.db
-$dbFile = __DIR__ . DIRECTORY_SEPARATOR . 'textdateien' . DIRECTORY_SEPARATOR . 'abwesenheit.db';
+// Verwende die users DB als gemeinsame DB für 1:N Verbindung
+$dbFile = __DIR__ . DIRECTORY_SEPARATOR . 'textdateien' . DIRECTORY_SEPARATOR . 'users.db';
 $dsn = 'sqlite:' . $dbFile;
 $abwesenheiten = [];
 
 try {
     $pdo = new PDO($dsn);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Foreign keys aktivieren
+    $pdo->exec('PRAGMA foreign_keys = ON');
 
-    // Tabelle erstellen, falls nicht vorhanden
+    // Tabelle erstellen, falls nicht vorhanden (user_id referenziert users.id)
     $createSql = "CREATE TABLE IF NOT EXISTS abwesenheiten (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        username TEXT NOT NULL,
+        user_id INTEGER,
         datum TEXT NOT NULL,
         startzeit TEXT NOT NULL,
         endzeit TEXT NOT NULL,
-        grund TEXT NOT NULL
+        grund TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     )";
     $pdo->exec($createSql);
 
@@ -31,13 +34,22 @@ try {
         $start = trim($_POST['startzeit'] ?? '');
         $end = trim($_POST['endzeit'] ?? '');
         $grund = trim($_POST['grund'] ?? '');
-        $name = $_SESSION['username'] ?? 'Unbekannt';
+        $username = $_SESSION['username'] ?? null;
         $datum = date('Y-m-d');
 
         if ($start !== '' && $end !== '' && $grund !== '') {
-            $stmt = $pdo->prepare('INSERT INTO abwesenheiten (username, datum, startzeit, endzeit, grund) VALUES (:username, :datum, :start, :end, :grund)');
+            // user_id ermitteln
+            $userId = null;
+            if ($username) {
+                $stmt = $pdo->prepare('SELECT id FROM users WHERE username = :username LIMIT 1');
+                $stmt->execute([':username' => $username]);
+                $u = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($u) $userId = (int)$u['id'];
+            }
+
+            $stmt = $pdo->prepare('INSERT INTO abwesenheiten (user_id, datum, startzeit, endzeit, grund) VALUES (:user_id, :datum, :start, :end, :grund)');
             $stmt->execute([
-                ':username' => $name,
+                ':user_id' => $userId,
                 ':datum' => $datum,
                 ':start' => $start,
                 ':end' => $end,
@@ -50,12 +62,12 @@ try {
         }
     }
 
-    // Bestehende Abwesenheiten laden (neueste zuerst)
-    $stmt = $pdo->query('SELECT id, created_at, username, datum, startzeit, endzeit, grund FROM abwesenheiten ORDER BY created_at DESC');
+    // Bestehende Abwesenheiten laden (neueste zuerst) mit Join auf users
+    $stmt = $pdo->query('SELECT a.id, a.created_at, a.user_id, a.datum, a.startzeit, a.endzeit, a.grund, u.username FROM abwesenheiten a LEFT JOIN users u ON a.user_id = u.id ORDER BY a.created_at DESC');
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($rows as $row) {
         $abwesenheiten[] = [
-            'name' => $row['username'],
+            'name' => $row['username'] ?? 'Unbekannt',
             'datum' => $row['datum'],
             'start' => $row['startzeit'],
             'end' => $row['endzeit'],

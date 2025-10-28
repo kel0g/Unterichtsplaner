@@ -4,31 +4,70 @@ session_start();
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $name = htmlspecialchars(trim($_POST['name']));
     $email = htmlspecialchars(trim($_POST['email']));
-    $password = htmlspecialchars(trim($_POST['password']));
+    $password = trim($_POST['password']); // Passwort nicht mit htmlspecialchars hashen
 
     if (!empty($name) && !empty($email) && !empty($password)) {
-        // random Code
+        // Random Code
         $code = rand(100000, 999999);
 
-        // Speicherung in der Textdatei
-        $data = "Name: $name | Email: $email | Passwort: $password | Code: $code" . PHP_EOL;
-        file_put_contents("textdateien/users.txt", $data, FILE_APPEND | LOCK_EX);
+        // SQLite DB
+        $dbFile = __DIR__ . DIRECTORY_SEPARATOR . 'textdateien' . DIRECTORY_SEPARATOR . 'users.db';
+        $dsn = 'sqlite:' . $dbFile;
 
-        // Code per E-Mail senden
-        $subject = "Dein Bestätigungscode";
-        $message = "Hallo $name,\n\nDein Bestätigungscode lautet: $code\n\nGib diesen Code auf der Webseite ein, um deine Registrierung abzuschließen.";
-        $headers = "From: noreply@unterrichtsplan.de";
+        try {
+            $pdo = new PDO($dsn);
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        // funktionirt nur auf server
-        mail($email, $subject, $message, $headers);
+            // Tabelle erstellen, falls nicht vorhanden
+            $createSql = "CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                email TEXT NOT NULL,
+                password TEXT NOT NULL,
+                verified INTEGER DEFAULT 0,
+                verify_code TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )";
+            $pdo->exec($createSql);
 
-        // Code und E-Mail in Session speichern, um sie in verify.php zu prüfen
-        $_SESSION['email'] = $email;
-        $_SESSION['code'] = $code;
+            // Passwort hashen
+            $hashed = password_hash($password, PASSWORD_DEFAULT);
 
-        // Weiterleitung zu Verifizierung
-        header("Location: verify.php");
-        exit();
+            // Insert (verifiziert = 0)
+            $stmt = $pdo->prepare('INSERT INTO users (username, email, password, verified, verify_code) VALUES (:username, :email, :password, 0, :code)');
+            $stmt->execute([
+                ':username' => $name,
+                ':email' => $email,
+                ':password' => $hashed,
+                ':code' => $code
+            ]);
+
+            // Code per E-Mail senden
+            $subject = "Dein Bestätigungscode";
+            $message = "Hallo $name,\n\nDein Bestätigungscode lautet: $code\n\nGib diesen Code auf der Webseite ein, um deine Registrierung abzuschließen.";
+            $headers = "From: noreply@unterrichtsplan.de";
+
+            // funktioniert nur auf Server
+            @mail($email, $subject, $message, $headers);
+
+            // Code und E-Mail in Session speichern, um sie in verify.php zu prüfen
+            $_SESSION['email'] = $email;
+            $_SESSION['code'] = $code;
+
+            // Weiterleitung zu Verifizierung
+            header("Location: verify.php");
+            exit();
+
+        } catch (Exception $e) {
+            // Fehler (z.B. Duplicate username)
+            if (strpos($e->getMessage(), 'UNIQUE') !== false) {
+                $error = 'Benutzername ist bereits vergeben.';
+            } else {
+                error_log('Register DB-Fehler: ' . $e->getMessage());
+                $error = 'Ein Fehler ist aufgetreten. Versuche es später erneut.';
+            }
+        }
+
     } else {
         $error = "Bitte alle Felder ausfüllen!";
     }

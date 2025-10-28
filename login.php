@@ -3,45 +3,36 @@ session_start();
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $name = htmlspecialchars(trim($_POST['name']));
-    $password = htmlspecialchars(trim($_POST['password']));
+    $password = trim($_POST['password']);
 
     if (!empty($name) && !empty($password)) {
-        $file = "textdateien/users.txt";
+        $dbFile = __DIR__ . DIRECTORY_SEPARATOR . 'textdateien' . DIRECTORY_SEPARATOR . 'users.db';
+        $dsn = 'sqlite:' . $dbFile;
 
-        if (file_exists($file)) {
-            $users = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            $login_success = false;
+        if (file_exists($dbFile)) {
+            try {
+                $pdo = new PDO($dsn);
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            foreach ($users as $user) {
-                // Name: Max | Email: max@test.de | Passwort: 1234 | Code: 123456
-                $parts = explode("|", $user);
-                $userData = [];
+                $stmt = $pdo->prepare('SELECT username, password, verified FROM users WHERE username = :username LIMIT 1');
+                $stmt->execute([':username' => $name]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                foreach ($parts as $part) {
-                    list($key, $value) = array_map('trim', explode(":", $part));
-                    $userData[$key] = $value;
+                if ($user && password_verify($password, $user['password'])) {
+                    // Optional: Check verified status
+                    $_SESSION['username'] = $user['username'];
+                    header("Location: dashboard.php");
+                    exit();
+                } else {
+                    $error = "Name oder Passwort ist falsch.";
                 }
 
-                if (
-                    isset($userData['Name']) &&
-                    isset($userData['Passwort']) &&
-                    $userData['Name'] === $name &&
-                    $userData['Passwort'] === $password
-                ) {
-                    $login_success = true;
-                    $_SESSION['username'] = $name;
-                    break;
-                }
-            }
-
-            if ($login_success) {
-                header("Location: dashboard.php");
-                exit();
-            } else {
-                $error = "Name oder Passwort ist falsch.";
+            } catch (Exception $e) {
+                error_log('Login DB-Fehler: ' . $e->getMessage());
+                $error = 'Ein Fehler ist aufgetreten. Versuche es später erneut.';
             }
         } else {
-            $error = "Keine Benutzerdatei gefunden.";
+            $error = "Keine Benutzerdatenbank gefunden.";
         }
     } else {
         $error = "Bitte alle Felder ausfüllen!";

@@ -22,7 +22,6 @@ $username = $_SESSION['username'];
         <p>Wähle eine Option:</p>
 
         <div class="main-buttons">
-            <a href="profile.php" class="main-btn">Profile</a>
             <a href="logout.php" class="main-btn">Logout</a>
         </div>
 
