@@ -42,20 +42,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 ':code' => $code
             ]);
 
-            // Code per E-Mail senden
-            $subject = "Dein Bestätigungscode";
-            $message = "Hallo $name,\n\nDein Bestätigungscode lautet: $code\n\nGib diesen Code auf der Webseite ein, um deine Registrierung abzuschließen.";
-            $headers = "From: noreply@unterrichtsplan.de";
-
-            // funktioniert nur auf Server
-            @mail($email, $subject, $message, $headers);
-
-            // Code und E-Mail in Session speichern, um sie in verify.php zu prüfen
-            $_SESSION['email'] = $email;
-            $_SESSION['code'] = $code;
-
-            // Weiterleitung zu Verifizierung
-            header("Location: verify.php");
+            // Direkt als eingeloggt markieren und zum Dashboard weiterleiten
+            $_SESSION['username'] = $name;
+            header("Location: dashboard.php");
             exit();
 
         } catch (Exception $e) {
