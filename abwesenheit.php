@@ -128,7 +128,7 @@ try {
         </div>
 
         <div class="bottom-nav">
-            <a href="dashboard.php" class="nav-btn">Start</a>
+            <a href="dashboard.php" class="nav-btn active">Start</a>
             <a href="stundenplan.php" class="nav-btn">Stundenplan</a>
             <a href="mitteilungen.php" class="nav-btn">Mitteilungen</a>
             <a href="einstellungen.php" class="nav-btn">Einstellungen</a>
